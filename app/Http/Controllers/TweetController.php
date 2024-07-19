@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tweet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TweetController extends Controller
 {
@@ -12,15 +13,22 @@ class TweetController extends Controller
      */
     public function index()
     {
-        //
+        $tweets = Tweet::orderBy('created_at', 'desc')->get();
+        // dump($tweet);
+        return view('tweets.index', ['tweets' => $tweets]);
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        //
+        // dump(request('tweet'));
+
+        $request->validate(['tweet' => ['required', 'min:3']]);
+
+        Tweet::create(['content' => request('tweet'), 'user_id' => 1]);
+        return redirect('/');
     }
 
     /**
@@ -36,7 +44,13 @@ class TweetController extends Controller
      */
     public function show(Tweet $tweet)
     {
-        //
+
+        // Load the comments ordered by 'created_at'
+        $tweet->load(['comments' => function ($query) {
+            $query->orderBy('created_at', 'desc');
+        }]);
+
+        return view('tweets.show', ['tweet' => $tweet]);
     }
 
     /**
@@ -44,7 +58,14 @@ class TweetController extends Controller
      */
     public function edit(Tweet $tweet)
     {
-        //
+
+        if (Auth::guest()) {
+
+            return redirect('/login');
+        }
+
+
+        return view('tweets.edit', ['tweet' => $tweet]);
     }
 
     /**
@@ -52,7 +73,10 @@ class TweetController extends Controller
      */
     public function update(Request $request, Tweet $tweet)
     {
-        //
+        $tweet->update(['content' => request('tweet')]);
+        $tweet->save();
+
+        return redirect('/tweets/' . $tweet->id);
     }
 
     /**
@@ -60,6 +84,13 @@ class TweetController extends Controller
      */
     public function destroy(Tweet $tweet)
     {
-        //
+
+        if (Auth::guest()) {
+
+            return redirect('/login');
+        }
+
+        $tweet->delete();
+        return redirect('/');
     }
 }

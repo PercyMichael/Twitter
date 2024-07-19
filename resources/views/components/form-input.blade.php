@@ -1,0 +1,1 @@
+<input type="text" {{$attributes}} class="border py-2 px-4 rounded-full" />
